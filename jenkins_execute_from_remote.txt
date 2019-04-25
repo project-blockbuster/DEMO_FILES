@@ -3,3 +3,6 @@ curl -u "admin:Test@123" -s 'http://ec2-18-221-190-221.us-east-2.compute.amazona
 
 
 curl -u "jenkins:1234" -H "Jenkins-Crumb:8eeac59998d48876b304488dc7337fc8" -X POST http://ec2-18-221-190-221.us-east-2.compute.amazonaws.com:8080/job/maven/build?delay=0sec
+
+
+http://ec2-18-221-190-221.us-east-2.compute.amazonaws.com:8080/github-webhook/  
