@@ -1,0 +1,32 @@
+version: "3"
+services:
+
+  addressapplication:
+    image: localhost/addresswebapp:v1
+    ports:
+      - 6060:8080
+    networks:
+      - customnetwork
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+  dthapplication:
+    image: localhost/dthwebapp:v1
+    volumes:
+      - dth-data:/app
+    ports:
+      - 7070:8080
+    networks:
+      - customnetwork
+    depends_on:
+      - addressapplication
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+networks:
+  customnetwork:
+
+volumes:
+  dth-data:
