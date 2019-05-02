@@ -1,0 +1,339 @@
+https://puppet.com/docs/puppet/6.4/puppet_platform.html
+
+MASTER NODE
+==========================
+sudo rpm -ivh https://yum.puppet.com/puppet6-release-el-7.noarch.rpm
+sudo yum install puppetserver
+/etc/sysconfig/puppetserver
+JAVA_ARGS="-Xms2g -Xmx2g" with JAVA_ARGS="-Xms512m -Xmx512m"
+sudo vi /etc/hosts
+192.3.4.5 puppet
+sudo vi /etc/puppetlabs/puppet/puppet.conf
+server=ip-172-31-33-62.us-east-2.compute.internal
+sudo service puppetserver start
+sudo su
+puppetserver ca list --all
+
+puppetserver ca sign --all
+Successfully signed certificate request for ip-172-31-47-222.us-east-2.compute.internal
+
+
+AGENT NODE
+=========================
+sudo rpm -ivh https://yum.puppet.com/puppet6-release-el-7.noarch.rpm
+sudo yum install puppet-agent
+sudo vi /etc/hosts
+192.3.4.5 puppet
+sudo /opt/puppetlabs/bin/puppet resource service puppet ensure=running enable=true
+
+puppet agent --server puppet --waitforcert 10 -t --verbose
+puppet agent --test
+
+
+puppet agent --environment=production --test
+	
+
+In agent change environment
+/etc/puppetlabs/puppet/puppet.conf
+
+[main]
+server = puppet
+environment = test
+runinterval = 1h
+
+
+Info: csr_attributes file loading from /etc/puppetlabs/puppet/csr_attributes.yaml
+Info: Creating a new SSL certificate request for ip-172-31-33-45.us-east-2.compute.internal
+Info: Certificate Request fingerprint (SHA256): DF:1F:0C:00:4C:B0:8B:BA:FB:CB:98:B2:76:56:F6:2B:34:86:B5:56:F6:A2:85:A7:74:9D:78:D1:F4:5B:F0:EC
+Info: Certificate for ip-172-31-33-45.us-east-2.compute.internal has not been signed yet
+Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (ip-172-31-33-45.us-east-2.compute.internal). Exiting now because the waitforcert setting is set to 0.
+
+
+
+
+
+
+
+
+
+https://puppet.com/docs/puppetserver/5.2/install_from_packages.html#memory-allocation
+
+For RHEL/CentOS, open /etc/sysconfig/puppetserver
+# Modify this if you'd like to change the memory allocation, enable JMX, etc
+ JAVA_ARGS="-Xms2g -Xmx2g"
+ 
+ for 1gb JAVA_ARGS="-Xms1g -Xmx1g"
+ for 512MB, use JAVA_ARGS="-Xms512m -Xmx512m"
+
+puppetserver ca list --all
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ vi /etc/hosts
+172.31.18.164 puppet
+
+sudo service puppetserver start
+ 
+sudo rpm -ivh https://yum.puppet.com/puppet6-release-el-7.noarch.rpm
+sudo yum install puppet-agent
+Notice: /Service[puppet]/ensure: ensure changed 'stopped' to 'running'
+
+puppet resource service puppet ensure=running enable=true
+
+service { 'puppet':
+  ensure => 'running',
+  enable => 'true',
+}
+
+
+Now go to master
+
+puppetserver ca list --all
+Requested Certificates:
+    ip-172-31-19-66.us-east-2.compute.internal   (SHA256)  5E:B5:18:1D:09:0F:E5:3F:52:CB:97:4F:42:C3:93:84:48:16:06:FF:FB:29:36:7A:13:C6:AD:21:E4:05:73:71
+Signed Certificates:
+    ip-172-31-18-164.us-east-2.compute.internal   (SHA256)  D4:FA:FD:4A:B8:E1:EF:54:6D:75:C0:61:D2:DE:E7:35:4C:CD:F2:A1:19:A9:79:9B:8B:65:AE:F2:DA:DA:96:63   alt names: ["DNS:puppet", "DNS:ip-172-31-18-164.us-east-2.compute.internal"]
+	
+puppetserver ca sign --all
+
+Now in agent
+puppet agent --test
+
+Now in master
+/etc/puppetlabs/code/environments/production/manifests/site.pp
+file {'/tmp/example.txt':
+ ensure  => present,
+ mode    => "0644",
+ content => "From The Testing Environment \n",
+}
+
+
+puppet agent --environment=production --test
+	
+
+In agent change environment
+/etc/puppetlabs/puppet/puppet.conf
+
+[main]
+server = puppet
+environment = test
+runinterval = 1h
+
+class httpdconfig {
+    # Installing NTP Package
+  package {"httpd":
+    ensure=> "present",
+    }
+    # Starting NTP services
+  service {"httpd":
+    ensure=> "running",
+    }
+}
+
+include httpdconfig
+
+
+sudo kill $(puppet config print pidfile --section agent)
+
+
+[centos@ip-172-31-10-34 ~]$ sudo /opt/puppetlabs/bin/puppet agent --test
+Info: csr_attributes file loading from /etc/puppetlabs/puppet/csr_attributes.yaml
+Info: Creating a new SSL certificate request for ip-172-31-10-34.us-east-2.compute.internal
+Info: Certificate Request fingerprint (SHA256): 0C:F8:ED:4C:09:0B:FD:88:1E:C0:86:5E:FE:1A:0A:CD:D2:5B:19:C7:3A:1C:3A:FA:ED:58:41:E1:0A:C0:D9:A4
+Info: Downloaded certificate for ip-172-31-10-34.us-east-2.compute.internal from puppet
+Info: Using configured environment 'production'
+Info: Retrieving pluginfacts
+Info: Retrieving plugin
+Info: Retrieving locales
+Info: Caching catalog for ip-172-31-10-34.us-east-2.compute.internal
+Info: Applying configuration version '1556623514'
+Notice: Applied catalog in 0.01 seconds
+
+
+puppet resource --types
+augeas
+cron
+exec
+file
+filebucket
+group
+host
+mount
+notify
+package
+resources
+schedule
+scheduled_task
+selboolean
+selmodule
+service
+ssh_authorized_key
+sshkey
+stage
+tidy
+user
+whit
+yumrepo
+zfs
+zone
+zpool
+
+
+puppet resource --help
+
+puppet describe package
+
+[root@ip-172-31-15-37 centos]# vi demontp.pp
+# Class Definition 
+class ntpconfig {
+    # Installing NTP Package 
+  package {"ntp": 
+    ensure=> "present",
+    }
+    # Configuring NTP configuration file 
+  file {"/etc/ntp.conf": 
+    ensure=> "present", 
+    content=> "server 0.centos.pool.ntp.org iburst\n",
+    }
+    # Starting NTP services 
+  service {"ntpd": 
+    ensure=> "running",
+    }
+}
+
+
+
+[root@ip-172-31-15-37 centos]# puppet parser validate demontp.pp
+
+Test
+puppet apply demontp.pp --noop
+
+puppet apply demontp.pp
+
+[root@ip-172-31-15-37 centos]# vi demontp_final.pp
+# Class Definition 
+class ntpconfig {
+    # Installing NTP Package 
+  package {"ntp": 
+    ensure=> "present",
+    }
+    # Configuring NTP configuration file 
+  file {"/etc/ntp.conf": 
+    ensure=> "present", 
+    content=> "server 0.centos.pool.ntp.org iburst\n",
+    }
+    # Starting NTP services 
+  service {"ntpd": 
+    ensure=> "running",
+    }
+}
+
+node default { 
+# Class Declaration 
+include ntpconfig
+
+class { 'java': }
+
+tomcat::install { '/opt/tomcat9':
+  source_url => 'https://www.apache.org/dist/tomcat/tomcat-9/v9.0.x/bin/apache-tomcat-9.0.x.tar.gz'
+}
+
+}
+
+puppet module install puppetlabs-java --version 3.3.0
+puppet module install puppetlabs-tomcat --version 2.5.0
+puppet module upgrade puppetlabs-stdlib
+
+[root@ip-172-31-15-37 centos]# puppet apply demontp_final.pp --noop
+[root@ip-172-31-15-37 centos]# puppet apply demontp_final.pp 
+
+[root@ip-172-31-15-37 centos]# cd /etc/puppetlabs/code/environments/
+
+puppet apply demontp_final.pp --environment=test
+
+ vi /etc/puppetlabs/code/environments/test/modules/site.pp
+
+ file {'/tmp/example.txt':
+ ensure  => present,
+ mode    => "0644",
+ content => "From The Testing Environment \n",
+}
+
+puppet agent --environment=test --test
+ 
+puppet agent --environment=test --test --noop
+	
+puppet agent --environment=test  
+
+master 
+
+Agent -> Agent sends request to master to get the catalog
+
+catalog is a document that describes the desired state. Specifies all resources and dependencies
+Agent applies the catalog and submits report to puppet master
+
+Manifest is a file with extension .pp where all resources to be checked or changed is declared
+
+Resources any thing which can be changes in client are called resources. ex packages,files, services etc
+
+type - package, file, service etc
+
+title
+
+type { 'title'
+  argument1 => value
+  argument2 => value  
+}
+
+ex
+
+package { 'java':
+	ensure => present
+}
+
+file { 'somefile.txt':
+	path => '/etc/somefile.txt'
+}
+
+service { 'httpd':
+	ensure => running,
+	enable => true
+}
+
+Classes they are group of resources
+class httpd{
+	package { 'httpd':
+		ensure => present
+	}
+	service { 'httpd':
+		ensure => running,
+		enable => true
+	}	
+}
+
+Communication will be signed and acknowledged only they they can communicate
+
+
+
+
+
+
+package { 'httpd':
+		ensure => present
+}
+
+class httpd{
+	package { 'httpd':
+		ensure => present
+	}
+	service { 'httpd':
+		ensure => running,
+		enable => true
+	}	
+}

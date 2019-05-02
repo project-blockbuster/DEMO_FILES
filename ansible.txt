@@ -1,0 +1,31 @@
+sudo yum install ansible
+
+/etc/ansible/ansible.cfg
+host_key_checking = False
+
+private_key_file = /path/to/file
+chmod 400 /tmp/jiten_ohio_access.pem
+
+[centos@ip-172-31-7-37 ~]$ ansible all -m ping
+ansible all -m ping -i inventry.txt
+
+
+mkdir roles
+cd roles
+ansible-galaxy init httpd
+vi site.yaml
+
+---
+- hosts: ec2_host
+  tasks:
+  - name: ensure apache is at the latest version
+    yum:
+      name: httpd
+      state: latest
+    become: true
+	
+-
+  name: demo
+  hosts: localhost
+  roles:
+    - demo

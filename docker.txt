@@ -1,5 +1,136 @@
 
 
+docker -d run centos --name=dthapp
+
+docker cp dth-web-app.war dthapp:/tmp
+
+[224566/] yum install java
+
+java -jar dth-web-app.war
+
+docker commit 224566 localhost/dthapp:0.3
+
+projectblockbuster
+
+docker login
+
+docker tag localhost/dthapp:0.3 projectblockbuster/dthapp:0.3
+
+docker push projectblockbuster/dthapp:0.3
+
+
+
+docker volume create myvolume
+
+docker -d run centos -v myvolume:/tmp --name=dthapp
+docker -d run centos -v home/centos:/tmp --name=dthapp
+
+
+
+Default Network - Bridge Network
+
+docker -d run centos --name=container1  172.2.3.0
+
+docker -d run centos --name=container2 172.2.3.2
+
+[2246767/] ping 172.2.3.0
+
+
+
+
+
+docker network create oldie
+
+
+Default Network - Bridge Network - bridge0
+docker -d run centos --name=container1  172.2.3.0
+
+oldie
+docker -d run centos --network=oldie --name=container2 172.2.3.2
+
+[container2/] ping 172.2.3.0
+
+
+
+Front End Html CSS etc - Container1 - SomeNet1
+
+Java Server - Container2 - SomeNet1, SomeNet2
+      -
+DB Layer - Container3 - SomeNet2
+
+
+FrontEND -> JAVAServer -> DB
+
+
+docker -d run centos -p 5050:8080 --network=oldie --name=container2
+
+docker -d run centos --name=dthapp
+
+docker cp dth-web-app.war dthapp:/tmp
+
+[224566/] yum install java
+
+java -jar dth-web-app.war
+
+docker commit 224566 localhost/dthapp:0.3
+
+Dockerfile
+FROM centos
+COPY dth-web-app.war /tmp
+RUN yum install -y java
+CMD ["java","-jar","dth-web-app.war"]
+
+docker build -t localhost/dthapp:0.3 .
+
+
+
+
+
+
+Docker Host Node
+docker swarm init
+
+docker swarm join \
+    --token SWMTKN-1-51zjq7mbd0x8wzqiwo7gwalejho3obrhlt81kcu8madczswiea-7uxevh3jd1woubmn94xh22g8k \
+    172.31.9.72:2377
+	
+Docker Node
+Docker is installed
+Docker is started [ sudo service docker status]
+sudo docker swarm join \
+    --token SWMTKN-1-51zjq7mbd0x8wzqiwo7gwalejho3obrhlt81kcu8madczswiea-7uxevh3jd1woubmn94xh22g8k \
+    172.31.9.72:2377
+This node joined a swarm as a worker.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -16,6 +147,16 @@ docker commit a0514e831b40 dth_app
 docker save -o /tmp/dth_app.tar dth_app
 docker load -i /tmp/dth_app.tar
 
+https://docs.docker.com/install/linux/linux-postinstall/
+sudo groupadd docker
+sudo usermod -aG docker $USER
+sudo usermod -aG docker jenkins
+reboot
+docker run centos
+
+Configure Docker to start on boot
+sudo systemctl enable docker
+
 yum install net-tools // for ifconfig
 
 
@@ -28,18 +169,66 @@ sudo docker images
 
 sudo docker swarm init
 
+
 docker swarm join \
     --token SWMTKN-1-5qtrr3fmu4z4enfyqn0zcdl1d4i692zjii6tky1mr4q9p97wgj-737w2dutiioi7xkwf1cu61dn8 \
     172.31.9.72:2377
+	
+sudo docker network create -d overlay dthoverlay
+	
+docker service create --network dthoverlay --name addressapplication --replicas 2 --publish 6060:8080 localhost/addresswebapp:v1	
+docker service create --network dthoverlay --name dthapplication --replicas 2 --publish 7070:8080 localhost/dthwebapp:v1	
+	
+docker service create --network mydthswarmnet --name addressapplication --replicas 3 
+--publish 6060:8080 docker.io/projectblockbuster/addresswebapplication:v2	
 
-docker volume create my-vol
+version: "3"
+services:
+  addressapplication:
+    image: docker.io/projectblockbuster/addresswebapplication
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "6060:8080"
+    networks:
+      - mydthswarmnet
+  dthapplication:
+    image: docker.io/projectblockbuster/dthwebapp
+	deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "7070:8080"
+    networks:
+      - mydthswarmnet
+networks:
+  mydthswarmnet:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+	
+	
+	docker volume create my-vol
 docker volume ls
 docker volume inspect my-vol
 
-docker run -d \
-  --name devtest \
-  --mount source=myvol2,target=/app \
-  nginx:latest
+docker run -d --name devtest --mount source=myvol2,target=/app nginx:latest
   
 docker run -d \
   --name devtest \
@@ -74,6 +263,8 @@ s in "srw-rw----" stands for socket
 
 to enable a user to run docker without sudo add the user to docker group
 Check in group exists: cat /etc/group
+
+sudo groupadd docker
 
 [root@ip-172-31-16-132 centos]# sudo gpasswd -a centos docker
 Adding user centos to group docker
@@ -325,8 +516,21 @@ services:
         constraints: [node.role == manager]
     networks:
       - webnet
+
 networks:
   webnet:
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
 
 version: "3"
@@ -548,3 +752,93 @@ docker-machine ssh myvm1 "docker stack deploy -c <file> <app>"   # Deploy an app
 eval $(docker-machine env -u)     # Disconnect shell from VMs, use native docker
 docker-machine stop $(docker-machine ls -q)               # Stop all running VMs
 docker-machine rm $(docker-machine ls -q) # Delete all VMs and their disk images
+
+
+
+
+
+
+
+Setup Docker In jenkins
+login to jenkins node
+sudo yum install docker
+sudo service docker start
+sudo service docker status
+
+sudo groupadd docker
+sudo usermod -aG docker $USER
+sudo usermod -aG docker centos
+sudo usermod -aG docker jenkins
+
+In Jenkins Manage plugins - In avaliable select docker plugin and install
+Configure Credentials
+Add docker hub login details
+
+
+1) Checkout DTH Application - GIT
+2) I will build - compile using maven
+3) I will test using maven
+4) I will create a docker image using docker in jenkins
+5) I will push the image to dockerhub
+
+
+
+
+
+
+pipeline {
+  environment {
+    registry = "projectblockbuster/dthwebapplication"
+    registryCredential = 'dockerhublogin'
+    dockerImage = ''
+  }
+  agent any
+  stages {
+    stage('Cloning Git') {
+      steps {
+        git 'https://github.com/project-blockbuster/DTHWebApplication.git'
+      }
+    }
+    stage('Build') {
+       steps {
+         sh 'mvn compile'
+       }
+    }
+    stage('Test') {
+      steps {
+        sh 'mvn test -DskipITs'
+      }
+    }
+    stage('Package') {
+      steps {
+        sh 'mvn package -Dskip.surefire.tests -DskipITs'
+      }
+    }
+    stage('Building image') {
+      steps{
+        script {
+          dockerImage = docker.build registry + ":$BUILD_NUMBER"
+        }
+      }
+    }
+    stage('Deploy Image') {
+      steps{
+         script {
+            docker.withRegistry( '', registryCredential ) {
+            dockerImage.push()
+          }
+        }
+      }
+    }
+    stage('Remove Unused docker image') {
+      steps{
+        sh "docker rmi $registry:$BUILD_NUMBER"
+      }
+    }
+  }
+}
+
+
+
+
+

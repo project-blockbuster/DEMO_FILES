@@ -1,0 +1,89 @@
+https://assets.nagios.com/downloads/nagioscore/docs/Nagios-Core-Installing-On-Centos7.pdf
+
+In remote node
+sudo su
+rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum install -y nrpe nagios-plugins-all
+vi /etc/nagios/nrpe.cfg
+Add the Nagios servers IP address, separated by comma like below.
+allowed_hosts=192.168.1.10
+
+command[check_users]=/usr/lib64/nagios/plugins/check_users -w 5 -c 10
+command[check_load]=/usr/lib64/nagios/plugins/check_load -w 15,10,5 -c 30,25,20
+command[check_root]=/usr/lib64/nagios/plugins/check_disk -w 20% -c 10% -p /dev/mapper/centos-root
+command[check_swap]=/usr/lib64/nagios/plugins/check_swap -w 20% -c 10%
+command[check_total_procs]=/usr/lib64/nagios/plugins/check_procs -w 150 -c 200
+
+systemctl start nrpe
+systemctl enable nrpe
+
+On Nagios Server
+rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum -y install nagios-plugins-nrpe
+vi /usr/local/nagios/etc/nagios.cfg
+Add or uncomment the following line.
+cfg_dir=/usr/local/nagios/etc/servers
+
+Configure Nagios Server
+
+sudo mkdir /usr/local/nagios/etc/servers
+vi /usr/local/nagios/etc/objects/commands.cfg
+### CentOS 7 / RHEL 7 ###
+
+# .check_nrpe. command definition
+define command{
+command_name check_nrpe
+command_line /usr/lib64/nagios/plugins/check_nrpe -H $HOSTADDRESS$ -t 30 -c $ARG1$
+}
+
+Add a Linux host to Nagios server
+vi /usr/local/nagios/etc/servers/client.cfg
+
+
+define host{
+
+            use                     linux-server
+            host_name               node1
+            alias                   node1
+            address                 172.31.11.86
+
+}
+
+define hostgroup{
+
+            hostgroup_name          linux-server
+            alias                   Linux Servers
+            members                 node1
+}
+
+define service{
+
+            use                     local-service
+            hostgroup_name          linux-server
+            service_description     Check Load
+            check_command           check_nrpe!check_load!"-w 15,10,5 -c 30,25,20"
+
+}
+
+define service{
+
+            use                     local-service
+            hostgroup_name          linux-server
+            service_description     Current Users
+            check_command           check_nrpe!check_users
+
+}
+
+define service{
+
+            use                     local-service
+            hostgroup_name          linux-server
+            service_description     Total Processes
+            check_command           check_nrpe!check_total_procs
+
+}
+
+Validate
+/usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg	
+
+systemctl restart nagios

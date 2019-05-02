@@ -1,0 +1,324 @@
+Create a kubernetes cluster
+Deploy an application
+Explore your application
+Expose your application publicly
+Scale up your app
+Update your app
+Rollback you app
+
+
+kubectl version
+kubectl cluster-info // cluster details
+kubectl get nodes //This command shows all nodes that can be used to host our applications.
+kubectl get nodes --help
+
+The run command creates a new deployment. 
+We need to provide the deployment name and app image location 
+
+kubectl run kubernetes-bootcamp --image=gcr.io/google-samples/kubernetes-bootcamp:v1 --port=8080
+searched for a suitable node where an instance of the application could be run 
+(we have only 1 available node)
+scheduled the application to run on that Node
+configured the cluster to reschedule the instance on a new Node when needed
+
+Pods that are running inside Kubernetes are running on a private, isolated network.
+By default they are visible from other pods and services within the same kubernetes
+cluster, but not outside that network.
+
+The kubectl command can create a proxy that will forward communications 
+into the cluster-wide, private network
+
+kubectl proxy
+
+curl http://localhost:8001/version
+
+The API server will automatically create an endpoint for each pod, 
+based on the pod name, 
+that is also accessible through the proxy.
+
+export POD_NAME=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')
+echo Name of the Pod: $POD_NAME
+
+kubectl get pods
+NAME                                   READY   STATUS    RESTARTS   AGE
+kubernetes-bootcamp-6bf84cb898-567d2   1/1     Running   0          4m53s
+
+Now we can make an HTTP request to the application running in that pod:
+curl http://localhost:8001/api/v1/namespaces/default/pods/kubernetes-bootcamp-6bf84cb898-567d2/proxy/
+
+A Pod always runs on a Node. 
+A Node is a worker machine in Kubernetes 
+and may be either a virtual or a physical machine
+
+kubectl get - list resources
+kubectl describe - show detailed information about a resource
+kubectl logs - print the logs from a container in a pod
+kubectl exec - execute a command on a container in a pod
+
+kubectl describe kubernetes-bootcamp-6bf84cb898-sjmgm
+We see here details about the Pod’s container: IP address, 
+the ports used and a list of events related to the lifecycle of the Pod.
+
+kubectl logs $POD_NAME
+kubectl logs kubernetes-bootcamp-6bf84cb898-sjmgm
+
+List all environment variables of pod
+kubectl exec $POD_NAME env
+kubectl exec kubernetes-bootcamp-6bf84cb898-sjmgm env
+
+kubectl exec -ti $POD_NAME bash
+kubectl exec kubernetes-bootcamp-6bf84cb898-sjmgm bash
+
+To exit container
+exit
+
+Kubernetes Pods are mortal. Pods in fact have a lifecycle. 
+When a worker node dies, the Pods running on the Node are also lost. 
+A ReplicaSet might then dynamically drive the cluster back to desired state 
+via creation of new Pods to keep your application running.
+
+Each Pod in a Kubernetes cluster has a unique IP address, 
+even Pods on the same Node, 
+so there needs to be a way of automatically reconciling changes among Pods 
+so that your applications continue to function.
+
+Services enable a loose coupling between dependent Pods.
+The set of Pods targeted by a Service is usually determined by a LabelSelector 
+
+kubectl get services
+
+To create a new service and expose it to external traffic 
+we’ll use the expose command 
+
+kubectl expose deployment/kubernetes-bootcamp --type="NodePort" --port 8080
+
+kubectl get services
+
+kubectl describe services/kubernetes-bootcamp
+
+curl http://host:nodePort
+
+Using -l to query using labels
+kubectl get pods -l run=kubernetes-bootcamp // Here label run=kubernetes-bootcamp
+kubectl get services -l run=kubernetes-bootcamp
+
+apply new label
+kubectl label pod $POD_NAME app=v1
+
+kubectl get pods -l app=v1
+
+Delete a service with a label
+kubectl delete service -l run=kubernetes-bootcamp
+
+Scaling Your App
+kubectl scale deployments/kubernetes-bootcamp --replicas=4
+
+
+
+DOCKER - Container runtime
+Kubelet - Kubernetes Node agent
+Kubeadm - Tool used to create a cluster
+Kunectl - Kubernetes client
+CNI	- Support for CNI networking
+
+yum install docker -y
+yum install kubeadm -y
+yum install kubectl -y
+yum install kubelet -y
+yum install kubernetes-cni -y
+
+yum install docker kubeadm kubectl kubelet kubernetes-cni
+
+
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOF
+
+sudo systemctl start docker.service
+sudo systemctl enable docker.service
+sudo systemctl enable kubelet.service
+
+kubeadm init
+[preflight/images] Pulling images required for setting up a Kubernetes cluster
+[preflight/images] This might take a minute or two, depending on the speed of your internet connection
+[preflight/images] You can also perform this action in beforehand using 'kubeadm config images pull'
+
+
+sudo systemctl start docker.service
+sudo systemctl enable docker.service
+sudo systemctl enable kubelet.service
+kubeadm join 172.31.7.37:6443 --token 2eiw99.qomsjyp4uuqa83l2 --discovery-token-ca-cert-hash sha256:5bcc1c3db402bf8668a10a6205fee60ae5665a65dc33af1437eed4a0dc02c054
+  
+Since we executed it as root. For a regular user to access go to regular user and copy paste the above in terminal
+
+The copy tells where to find the kubernetes config file and then change the ownership to the user and environment variable helps kubernetes to locate the kubernetes config file  
+
+[centos@ip-172-31-16-132 ~]$ kubectl get nodes
+NAME                                          STATUS     ROLES    AGE     VERSION
+ip-172-31-16-132.us-west-2.compute.internal   NotReady   master   9m11s   v1.12.2
+
+kubectl get pods -n kube-system
+
+
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+  
+You can now join any number of machines by running the following on each node
+as root:
+
+  kubeadm join 172.31.24.136:6443 --token d24gqv.oqdt1rl9y0e2ael2 --discovery-token-ca-cert-hash sha256:d1a39a8923dc6006ec5100994c3e9194eeed95559781f1ecdc30e3ca9e4ba923
+
+
+kubectl cluster-info // cluster details
+kubectl get nodes //This command shows all nodes that can be used to host our applications. 
+kubectl create deployment dth-application --image=projectblockbuster/dthwebapplication:4
+kubectl create deployment address-application --image=projectblockbuster/addresswebapplication:v2
+kubectl get deployments
+kubectl get pods
+kubectl exec -it dth-application-cc8bd8db-bkfmn -- /bin/bash
+kubectl exec dth-application-cc8bd8db-bkfmn env
+kubectl get services
+kubectl expose deployment/dth-bootcamp --type="NodePort" --port 8080
+
+kubectl proxy
+kubectl proxy --address 0.0.0.0 --accept-hosts '.*'
+http://18.191.238.175:8001/api/v1/namespaces/default/services/dthapplication:8080/proxy/
+curl http://localhost:8001/version
+curl http://localhost:8001/api/v1/namespaces/default/pods/dth-bootcamp-cc8bd8db-bkfmn/proxy/
+
+kubectl get pods -l run=kubernetes-bootcamp // Here label run=kubernetes-bootcamp
+kubectl get services -l run=kubernetes-bootcamp
+kubectl label pod address-bootcamp-5b5898575b-5q5km app=v1
+kubectl delete service -l run=kubernetes-bootcamp
+kubectl scale deployments/address-bootcamp --replicas=4
+kubectl get pods -o wide
+kubectl scale deployments/address-bootcamp --replicas=2 //Scale Down
+kubectl get pods -o jsonpath={.items[*].spec.containers[*].name} // List containers
+To update the image of the application to version 2, use the set image command
+kubectl set image deployments/address-bootcamp addresswebapplication=projectblockbuster/addresswebapplication:v1
+
+kubectl rollout status deployments/address-bootcamp //Status of above command can be checked here
+kubectl rollout undo deployments/address-bootcamp
+kubectl rollout history deployments/address-bootcamp
+Rollback
+kubectl rollout undo deployments/address-bootcamp --to-revision=1
+
+kubectl apply -f deployment.yaml
+kubectl rollout status -f deployment.yaml
+kubectl delete -f deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dth-deployment
+spec:
+  minReadySeconds: 5
+  replicas: 2 # defaulted by apiserver
+  strategy:
+    rollingUpdate: # defaulted by apiserver - derived from strategy.type
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: dth
+  template:
+    metadata:
+      labels:
+        app: dth
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.11.10 # update the image
+        ports:
+        - containerPort: 80
+		
+================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dth-deployment
+spec:
+  minReadySeconds: 5
+  replicas: 2 # defaulted by apiserver
+  strategy:
+    rollingUpdate: # defaulted by apiserver - derived from strategy.type
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: dth
+  template:
+    metadata:
+      labels:
+        app: dth
+    spec:
+      containers:
+      - name: dth-webapp
+        image: projectblockbuster/dthwebapplication:v3 # update the image
+        ports:
+        - containerPort: 8080
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: address-deployment
+spec:
+  minReadySeconds: 5
+  replicas: 2 # defaulted by apiserver
+  strategy:
+    rollingUpdate: # defaulted by apiserver - derived from strategy.type
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: address
+  template:
+    metadata:
+      labels:
+        app: address
+    spec:
+      containers:
+      - name: address-webapp
+        image: projectblockbuster/addressapplication:v3 # update the image
+        ports:
+        - containerPort: 8080
+		
+apiVersion: v1
+kind: Service
+metadata:
+  name: dthapplication
+  labels:
+    app: dth-svc
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: dth
+	
+	
+apiVersion: v1
+kind: Service
+metadata:
+  name: addressapplication
+  labels:
+    app: dth-svc
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: dth
