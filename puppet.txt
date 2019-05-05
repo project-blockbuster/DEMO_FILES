@@ -3,16 +3,34 @@ https://puppet.com/docs/puppet/6.4/puppet_platform.html
 MASTER NODE
 ==========================
 sudo rpm -ivh https://yum.puppet.com/puppet6-release-el-7.noarch.rpm
+
+
 sudo yum install puppetserver
+
+
 /etc/sysconfig/puppetserver
 JAVA_ARGS="-Xms2g -Xmx2g" with JAVA_ARGS="-Xms512m -Xmx512m"
+
+ifconfig | grep inet
+
+
 sudo vi /etc/hosts
 192.3.4.5 puppet
+
+
+hostname
+
+
 sudo vi /etc/puppetlabs/puppet/puppet.conf
 server=ip-172-31-33-62.us-east-2.compute.internal
+
+
 sudo service puppetserver start
 sudo su
+
+
 puppetserver ca list --all
+
 
 puppetserver ca sign --all
 Successfully signed certificate request for ip-172-31-47-222.us-east-2.compute.internal
@@ -20,13 +38,29 @@ Successfully signed certificate request for ip-172-31-47-222.us-east-2.compute.i
 
 AGENT NODE
 =========================
+
+
 sudo rpm -ivh https://yum.puppet.com/puppet6-release-el-7.noarch.rpm
+
+
+
 sudo yum install puppet-agent
+
+
+Add the puppet master ip in agent so agent can find master
 sudo vi /etc/hosts
 192.3.4.5 puppet
+
+
+
 sudo /opt/puppetlabs/bin/puppet resource service puppet ensure=running enable=true
 
+
+
 puppet agent --server puppet --waitforcert 10 -t --verbose
+
+
+
 puppet agent --test
 
 

@@ -160,7 +160,7 @@ sudo systemctl enable docker
 yum install net-tools // for ifconfig
 
 
-
+docker network create -o "com.docker.network.bridge.host_binding_ipv4"="0.0.0.0" simple-network
 
 
 

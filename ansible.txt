@@ -3,8 +3,45 @@ sudo yum install ansible
 /etc/ansible/ansible.cfg
 host_key_checking = False
 
-private_key_file = /path/to/file
+/etc/ansible/ansible.cfg
+#private_key_file = /path/to/file
+
+replace above with
+
+private_key_file = /tmp/jiten_ohio_access.pem
+
 chmod 400 /tmp/jiten_ohio_access.pem
+
+
+	  - nginx
+      - postgresql
+      - postgresql-server
+
+---
+- hosts: appnodes
+  tasks:
+  - name: ensure apache is at the latest version
+    yum:
+      name: httpd
+      state: latest
+    become: true
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 [centos@ip-172-31-7-37 ~]$ ansible all -m ping
 ansible all -m ping -i inventry.txt
@@ -29,3 +66,137 @@ vi site.yaml
   hosts: localhost
   roles:
     - demo
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+- name: Add multiple repositories into the same file (1/2)
+  yum_repository:
+    name: nginx-stable
+    description: nginx stable repo
+    file: ngnix
+    baseurl: http://nginx.org/packages/centos/$releasever/$basearch/
+    gpgcheck: yes
+    enabled: yes 
+    gpgkey:	https://nginx.org/keys/nginx_signing.key
+	
+- name: Add multiple repositories into the same file (1/2)
+  yum_repository:
+    name: nginx-mainline
+    description: nginx mainline repo
+    file: ngnix
+    baseurl: http://nginx.org/packages/mainline/centos/$releasever/$basearch/
+    gpgcheck: yes
+    enabled: no 
+    gpgkey:	https://nginx.org/keys/nginx_signing.key
+
+	
+	
+---
+- hosts: localhost
+
+  vars:
+    nameList: ['Jack','Tom','Jill']
+
+  tasks:
+  - name: Run Shell
+    shell: |
+      echo "Executing Shell"
+      hostnamectl >> /tmp/unix_version.txt
+    become: true
+    register: output
+
+  - debug:
+      msg: "{{ output }}"
+
+  - debug:
+      msg: "{{ item }}"
+    with_items: "{{ output.stdout_lines }}"
+
+  - file:
+      path: /etc/test.conf
+      state: touch
+      owner: centos
+      group: centos
+      mode: 0644
+    become: true
+	
+	
+	- command: echo {{ item }}
+    with_items: [ 0, 2, 4, 6, 8, 10 ]
+    when: item > 5
+	
+	
+	- template:
+    src: /mytemplates/foo.j2
+    dest: /etc/file.conf
+    owner: bin
+    group: wheel
+    mode: 0644
+
+
+- template:
+      src: file.j2
+      dest: /etc/file.conf
+      owner: centos
+      group: centos
+      mode: 0644
+    become: true	
+	
+{% for usrName in nameList%}
+UserName={{ usrName }} DefaultPassword=Test
+{% endfor %}
+
+{% for i in range(3)%}
+  This is the {{ i }}th variable
+{% endfor %}
+
+- debug: var=ansible_all_ipv4_addresses
+  - debug: var=ansible_default_ipv4.address
+  
+
+- name: Ansible Java
+    apt:
+      name: java
+      state: present
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+    become: true
+
+  - name: Ansible Java
+    yum:
+      name: java
+      state: present
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat'
+	become: true
+	
+- name: Ansible Loop example
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+     - python3
+     - ca-certificates
+     - git
+	 
+https://docs.ansible.com/ansible/latest/reference_appendices/special_variables.html
+
+- set_fact: namespace="default_namespace"
+  when: namespace is undefined
+  
+  
+---
+- hosts: webservers
+  roles:
+     - common
+     - webservers
