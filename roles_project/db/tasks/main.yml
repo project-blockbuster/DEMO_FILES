@@ -1,0 +1,34 @@
+---
+# tasks file for db
+
+  - name: Add multiple repositories into the same file (1/2)
+    yum_repository:
+      name: nginx-stable
+      description: nginx stable repo
+      file: ngnix
+      baseurl: http://nginx.org/packages/centos/$releasever/$basearch/
+      gpgcheck: yes
+      enabled: yes
+      gpgkey: https://nginx.org/keys/nginx_signing.key
+    become: true
+
+  - name: Add multiple repositories into the same file (1/2)
+    yum_repository:
+      name: nginx-mainline
+      description: nginx mainline repo
+      file: ngnix
+      baseurl: http://nginx.org/packages/mainline/centos/$releasever/$basearch/
+      gpgcheck: yes
+      enabled: no
+      gpgkey: https://nginx.org/keys/nginx_signing.key
+    become: true
+
+  - name: Package list
+    yum:
+      name:
+        - nginx
+        - postgresql
+        - postgresql-server
+      state: latest
+    become: true
+

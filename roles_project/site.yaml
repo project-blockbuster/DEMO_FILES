@@ -1,0 +1,11 @@
+---
+
+ - hosts: appnodes
+   roles:
+     - common
+     - app
+
+ - hosts: db
+   roles:
+     - common
+     - db

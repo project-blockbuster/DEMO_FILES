@@ -1,0 +1,8 @@
+---
+# tasks file for common
+
+- name: install java
+  yum:
+    name: java
+    state: present
+  become: true
