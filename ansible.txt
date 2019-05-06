@@ -1,3 +1,8 @@
+
+
+
+
+
 sudo yum install ansible
 
 /etc/ansible/ansible.cfg
@@ -25,6 +30,31 @@ chmod 400 /tmp/jiten_ohio_access.pem
       name: httpd
       state: latest
     become: true
+	
+	
+	---
+- hosts: all
+  tasks:
+    - file:
+        path: /etc/test.conf
+        state: touch
+        owner: centos
+        group: centos
+        mode: 0644
+      become: true
+
+    - command: echo {{ item }}
+      with_items: [ 0, 2, 4, 6, 8, 10 ]
+      when: item > 5
+
+    - shell: |
+        rpm -qa | grep java | wc -l
+      become: true
+      register: out
+
+    - debug:
+        msg: "Package Not Available"
+      when: "{{ out.stdout }} == 0"
 
 
 
@@ -100,6 +130,57 @@ vi site.yaml
     gpgcheck: yes
     enabled: no 
     gpgkey:	https://nginx.org/keys/nginx_signing.key
+
+
+
+---
+- hosts: all
+  tasks:
+    - name: Shell module sample
+      shell: |
+        hostname
+        echo "Inside the target machine"
+        touch /tmp/simpletouch.txt
+		
+
+
+---
+- hosts: all
+  tasks:
+    - name: Print hostname
+      shell: |
+        hostname
+      register: some_output
+
+    - debug:
+        msg: "{{ some_output }}"
+		
+---
+- hosts: all
+  tasks:
+    - name: Print hostname
+      shell: |
+        hostname
+      register: some_output
+
+    - debug:
+        msg: "{{ some_output.stdout }}"
+
+---
+- hosts: all
+  tasks:
+    - name: Print hostname
+      shell: |
+        ls /tmp
+      register: some_output
+
+    - debug:
+        msg: "{{ item }}"
+      with_items: "{{ some_output.stdout_lines }}"
+
+	  
+
+
 
 	
 	
@@ -200,3 +281,49 @@ https://docs.ansible.com/ansible/latest/reference_appendices/special_variables.h
   roles:
      - common
      - webservers
+	 
+---
+- hosts: all
+  vars:
+    nameList: ['Jack','Tom','Jill']
+
+  tasks:
+    - template:
+        src: test.j2
+        dest: /tmp/file.conf
+
+This is a test file
+Below are the sample users with default password
+{% for usrName in nameList%}
+Name={{ usrName }},Pwd=Test
+{% endfor %}	 
+	 
+This is a test file
+Below are the sample users with default password
+Name=Jack,Pwd=Test
+Name=Tom,Pwd=Test
+Name=Jill,Pwd=Test
+
+
+
+[centos@ip-172-31-29-26 project]$ ansible-galaxy init app
+- app was created successfully
+[centos@ip-172-31-29-26 project]$ ls
+app
+[centos@ip-172-31-29-26 project]$ ansible-galaxy init db
+- db was created successfully
+[centos@ip-172-31-29-26 project]$ ls
+app  db
+[centos@ip-172-31-29-26 project]$ ansible-galaxy init common
+- common was created successfully
+[centos@ip-172-31-29-26 project]$ ls
+app  common  db
+
+
+---
+- hosts: db
+  tasks:
+  - fetch:
+      src: /tmp/test.txt
+      dest: /tmp/test.txt
+    become: true
