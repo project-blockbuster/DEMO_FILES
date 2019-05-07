@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dth-deployment
+  namespace: testing
+  labels:
+    app: dth
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dthapplication
+  template:
+    metadata:
+      labels:
+        app: dthapplication
+    spec:
+      containers:
+      - name: dth
+        image: projectblockbuster/dthwebapplication:5
+        ports:
+        - containerPort: 8080

@@ -1,0 +1,39 @@
+- name: Ansible Template Example
+  template:
+    src: dth_service.j2
+    dest: /tmp/dth_service.yml
+- name: Ansible Template Example
+  template:
+    src: dth_deployment.j2
+    dest: /tmp/dth_deployment.yml
+- yum:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    state: present
+  become: true
+- yum:
+    name: python-pip
+    state: present
+  become: true
+- name: install the package, force reinstall to the latest version
+  pip: 
+    name: setuptools
+    state: forcereinstall
+  become: true
+- pip:
+    name: openshift
+    extra_args: --ignore-installed
+  become: true
+- name: Create a k8s namespace
+  k8s_raw:
+    name: testing
+    api_version: v1
+    kind: Namespace
+    state: present
+- name: Create a Service object by reading the definition from a file
+  k8s:
+    state: present
+    src: /tmp/dth_service.yml
+- name: Create a deployment object by reading the definition from a file
+  k8s:
+    state: present
+    src: /tmp/dth_deployment.yml
