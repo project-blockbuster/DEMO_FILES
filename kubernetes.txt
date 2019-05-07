@@ -7,6 +7,22 @@ Update your app
 Rollback you app
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 kubectl version
 kubectl cluster-info // cluster details
 kubectl get nodes //This command shows all nodes that can be used to host our applications.
@@ -118,7 +134,7 @@ kubectl scale deployments/kubernetes-bootcamp --replicas=4
 DOCKER - Container runtime
 Kubelet - Kubernetes Node agent
 Kubeadm - Tool used to create a cluster
-Kunectl - Kubernetes client
+Kubectl - Kubernetes client
 CNI	- Support for CNI networking
 
 yum install docker -y
@@ -240,31 +256,31 @@ spec:
         - containerPort: 80
 		
 ================================================
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: dth-deployment
-spec:
-  minReadySeconds: 5
-  replicas: 2 # defaulted by apiserver
-  strategy:
-    rollingUpdate: # defaulted by apiserver - derived from strategy.type
-      maxSurge: 1
-      maxUnavailable: 1
-    type: RollingUpdate
-  selector:
-    matchLabels:
-      app: dth
-  template:
-    metadata:
-      labels:
-        app: dth
-    spec:
-      containers:
-      - name: dth-webapp
-        image: projectblockbuster/dthwebapplication:v3 # update the image
-        ports:
-        - containerPort: 8080
+	apiVersion: apps/v1
+	kind: Deployment
+	metadata:
+	  name: dth-deployment
+	spec:
+	  minReadySeconds: 5
+	  replicas: 2 # defaulted by apiserver
+	  strategy:
+		rollingUpdate: # defaulted by apiserver - derived from strategy.type
+		  maxSurge: 1
+		  maxUnavailable: 1
+		type: RollingUpdate
+	  selector:
+		matchLabels:
+		  app: dth
+	  template:
+        metadata:
+          labels:
+          app: dth
+        spec:
+          containers:
+          - name: dth-webapp
+            image: projectblockbuster/dthwebapplication:v3 # update the image
+          ports:
+          - containerPort: 8080
 
 apiVersion: apps/v1
 kind: Deployment
@@ -313,7 +329,7 @@ kind: Service
 metadata:
   name: addressapplication
   labels:
-    app: dth-svc
+    app: address-svc
 spec:
   type: NodePort
   ports:
@@ -321,4 +337,9 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
-    app: dth
+    app: address
+	
+kubectl get pods --all-namespaces
+kubectl get service --all-namespaces	
+	
+http://18.217.164.112:8001/api/v1/namespaces/testing/services/dthapplication:8080/proxy/

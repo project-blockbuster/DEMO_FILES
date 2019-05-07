@@ -1,4 +1,4 @@
-
+yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 
 
 
@@ -327,3 +327,10 @@ app  common  db
       src: /tmp/test.txt
       dest: /tmp/test.txt
     become: true
+	
+	
+sudo yum install python-pip
+sudo pip install --upgrade setuptools
+sudo pip install openshift
+sudo pip install openshift --disable-pip-version-check --ignore-installed
+sudo pip install --upgrade pip
